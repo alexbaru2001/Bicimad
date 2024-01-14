@@ -1,8 +1,8 @@
-json==2.0.9
-geopandas==0.14.1
-folium==0.15.1
-matplotlib==3.7.2
-shapely==2.0.1
-pyproj==3.6.1
+json
+geopandas
+folium
+matplotlib
+shapely
+pyproj
 streamlit_folium
-plotly==5.9.0
+plotly
