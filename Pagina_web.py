@@ -4,7 +4,6 @@ Created on Tue Jan  9 13:49:18 2024
 
 @author: alexb
 """
-!pip install numpy json geopandas folium matplotlib shapely pyproj streamlit_folium plotly pandas
 import json
 import numpy as np
 import pandas as pd
