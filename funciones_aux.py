@@ -44,7 +44,7 @@ def cargar_ficheros(fichero):
         df = pd.DataFrame(data_list)
         return df
     else:
-        df_scrapeado=pd.read_csv('Data\\distritos.csv')
+        df_scrapeado=pd.read_csv('distritos.csv')
         df_scrapeado['numero']=df_scrapeado['numero'].astype(str)
         return df_scrapeado
 
@@ -345,9 +345,9 @@ def mostrar_hectareas(df_con_scrapper):
 
 
 def cargar_datos():
-    df=cargar_ficheros('Data\\response.json')
-    gdf=cargar_ficheros('Data\\Distritos.zip')
-    df_scrapeado=cargar_ficheros('Data\\distritos.csv')
+    df=cargar_ficheros('response.json')
+    gdf=cargar_ficheros('Distritos.zip')
+    df_scrapeado=cargar_ficheros('distritos.csv')
     return df,gdf,df_scrapeado
 
 def botones_para_modificar_df(df, distritos=False):
