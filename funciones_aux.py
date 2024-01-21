@@ -517,7 +517,7 @@ def menu():
            analisis_option(df,gdf)
     else:
         menu=st.sidebar.selectbox("Elige un tipo de grafico",
-             ('Bicis por distrito',"Densidad tipos de estaciones", "Número de personas por bici","Número de hectáreas por bici",'Nivel de ocupacion de las estaciones'))
+             ('Bicis por distrito',"Densidad tipos de estaciones", "Número de personas por bici","Número de hectáreas por bici",'Nivel de ocupación de las estaciones'))
         opciones=['Villa de Vallecas', 'Arganzuela', 'Chamartín', 'Usera',
                   'Fuencarral - El Pardo', 'Carabanchel', 'Hortaleza', 'Latina',
                   'San Blas - Canillejas', 'Ciudad Lineal', 'Moncloa - Aravaca',
