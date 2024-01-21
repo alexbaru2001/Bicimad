@@ -6,9 +6,7 @@ Created on Sat Jan 13 12:25:18 2024
 """
 
 import re
-from datetime import datetime
 
-import numpy as np
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
