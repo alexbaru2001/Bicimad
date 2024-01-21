@@ -517,7 +517,7 @@ def menu():
            analisis_option(df,gdf)
     else:
         menu=st.sidebar.selectbox("Elige un tipo de grafico",
-             ('Bicis por distrito',"Densidad tipos de estaciones", "Bicis por persona","Bicis por hectárea",'Nivel de ocupacion de las estaciones'))
+             ('Bicis por distrito',"Densidad tipos de estaciones", "Número de personas por bici","Número de hectáreas por bici",'Nivel de ocupacion de las estaciones'))
         opciones=['Villa de Vallecas', 'Arganzuela', 'Chamartín', 'Usera',
                   'Fuencarral - El Pardo', 'Carabanchel', 'Hortaleza', 'Latina',
                   'San Blas - Canillejas', 'Ciudad Lineal', 'Moncloa - Aravaca',
@@ -528,11 +528,11 @@ def menu():
             bicis_por_distrito(df,gdf_copia1)
         if menu=='Densidad tipos de estaciones':
             densidad_tipos_estaciones(df,gdf,opciones)            
-        if menu=='Bicis por persona':
+        if menu=='Número de personas por bici':
             st.plotly_chart(mostrar_personas_bici(df_con_scrapper))
-        if menu=='Bicis por hectárea':
+        if menu=='Número de hectáreas por bici':
             bicis_por_hectarea(df_con_scrapper)
-        if menu=='Nivel de ocupacion de las estaciones':
+        if menu=='Nivel de ocupación de las estaciones':
             nivel_de_ocupacion_de_las_estaciones(df,gdf,opciones)
 
 
