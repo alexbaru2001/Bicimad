@@ -261,7 +261,7 @@ def mostrar_densidad_tamaño_estación(df_distrito,distrito):
            panel_background = element_blank(),
            axis_line = element_line(color = "black", size=1),
            axis_ticks = element_line(color = "black", size=1))+
-      labs(x='Numero de bicis por estación', y='Densidad', title='Densidad tipo de estaciones', color='Distritos')
+      labs(x='Número de bicis por estación', y='Densidad', title='Densidad tipo de estaciones', color='Distritos')
     )
 
 
