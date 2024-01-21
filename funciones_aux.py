@@ -266,10 +266,11 @@ def mostrar_densidad_tamaño_estación(df_distrito,distrito):
 
 
 def nivel_ocupacion(df_distrito,distrito, formato='dodge'):
+    df_distrito_todos_viables=df_distrito.loc[df_distrito['light']!=3]
     if formato=='fill':
-        return (ggplot(df_distrito.loc[df_distrito['distrito'].isin(distrito)], aes(x='distrito', fill='factor(light)')) + 
+        return (ggplot(df_distrito_todos_viables.loc[df_distrito_todos_viables['distrito'].isin(distrito)], aes(x='distrito', fill='factor(light)')) + 
         geom_bar(position=formato) + 
-        scale_fill_manual(values=["#1f78b4", "#33a02c", "#e31a1c", "#ff7f00"],name = "Nivel de ocupación",labels = ['Bajo','Alto','Medio','No disponible'])+
+        scale_fill_manual(values=["#1f78b4", "#33a02c", "#e31a1c"],name = "Nivel de ocupación",labels = ['Bajo','Alto','Medio'])+
         theme(axis_text_x = element_text(angle = 45, hjust = 1,color = "black"),
               panel_grid_major_x=element_blank(),
               panel_background=element_rect(fill='#d4d4d4'),
@@ -277,9 +278,9 @@ def nivel_ocupacion(df_distrito,distrito, formato='dodge'):
         labs(x='Estaciones', y='Distritos')
         )
     else:
-        return (ggplot(df_distrito.loc[df_distrito['distrito'].isin(distrito)], aes(x='distrito', fill='factor(light)')) + 
+        return (ggplot(df_distrito_todos_viables.loc[df_distrito_todos_viables['distrito'].isin(distrito)], aes(x='distrito', fill='factor(light)')) + 
         geom_bar(position=formato) + 
-        scale_fill_manual(values=["#1f78b4", "#33a02c", "#e31a1c", "#ff7f00"],name = "Nivel de ocupación",labels = ['Bajo','Alto','Medio','No disponible'])+
+        scale_fill_manual(values=["#1f78b4", "#33a02c", "#e31a1c"],name = "Nivel de ocupación",labels = ['Bajo','Alto','Medio'])+
         theme(axis_text_x = element_text(angle = 45, hjust = 1,color = "black"),
               panel_grid_major_x=element_blank(),
               panel_grid_minor_y=element_blank(),
@@ -468,7 +469,7 @@ def nivel_de_ocupacion_de_las_estaciones(df,gdf,opciones):
            "Elige como ver el grafico",
       ('dodge','stack','fill'))
     with col2:  
-        if len(seleccion1)<4:
+        if len(seleccion1)<2:
             st.header('Secciona al menos cuatro distritos')
         else: 
             plot=nivel_ocupacion(df_distrito,seleccion1, formato=tipo_de_grafico)
