@@ -18,6 +18,8 @@ import plotly.express as px
 from streamlit_folium import st_folium
 import plotly.express as px
 import streamlit as st 
+from plotnine import *
+
 
 ###Cargado de datos########################################################################################################################################################
 #Cargamos los dos tipos de fichero que necesitamos para la practica
@@ -28,7 +30,8 @@ def cargar_ficheros(fichero):
         # Carga el archivo SHP en un GeoDataFrame
         gdf = gpd.read_file(shp_path)
         return gdf
-    else:
+    
+    elif '.json' in fichero:
         with open(fichero, 'r') as file:
             json_data = file.read()
         # Cargar el JSON en un diccionario
@@ -40,6 +43,10 @@ def cargar_ficheros(fichero):
         # Crear un DataFrame de Pandas con la lista 'data'
         df = pd.DataFrame(data_list)
         return df
+    else:
+        df_scrapeado=pd.read_csv('Data\\distritos.csv')
+        df_scrapeado['numero']=df_scrapeado['numero'].astype(str)
+        return df_scrapeado
 
 ###Preparacion de los datos###################################################################################################################################################
 
@@ -97,7 +104,24 @@ def cantidad_estaciones(df,num):
     df_cantidad=df.loc[df['total_bases']>=num]
     return df_cantidad
 
+#Funcion para poder mezclar el dataframe principal de las estaciones con el obtenido al scrapear
+def estaciones_con_info_extra(df,gdf,df_scrapeado):
+    df_distrito=estaciones_con_distrito(df,gdf)
+    bicis_distrito=df_distrito.groupby('distrito')[['distrito','total_bases']].sum('total_bases').reset_index().rename(columns={'total_bases': 'count'})
+    gdf_con_estaciones=modificar_gdf(gdf,bicis_distrito)
+    gdf_distritos=gdf_con_estaciones.rename(columns={'Estaciones': 'bicis'})[['COD_DIS','bicis','NOMBRE']]
+    df_con_scrapper=df_scrapeado.merge(gdf_distritos, left_on='numero', right_on='COD_DIS')[['nombre','area','poblacion','densidad','bicis']]
+    return df_con_scrapper
 
+
+def distrito_nivel_ocupacion(df_distrito,opcion,filtro=0):    
+    low=df_distrito.loc[df_distrito['light']==filtro]['distrito'].value_counts().reset_index().rename(columns={'count': 'light'})
+    result=(df_distrito['distrito'].value_counts().reset_index()).merge(low,on='distrito')
+    result['porcentaje']=result['light']/result['count']
+    if opcion=='max':
+        return result.loc[result['porcentaje']==result['porcentaje'].max()][['distrito','porcentaje']]
+    else:
+        return result.loc[result['porcentaje']==result['porcentaje'].min()][['distrito','porcentaje']]
 
 ###Display################################################################################################################################################################
 
@@ -202,7 +226,7 @@ def mostrar_mapa_densidad(df):
     return fig
 
 
-def mostrar_grafico(df,gdf,percent):
+def mostrar_grafico_cant_bicis(df,gdf,percent):
     df_copia_grafico = df.copy(deep=True)
     gdf_copia_grafico = gdf.copy(deep=True)
     df_con_distrito,df_estaciones_por_distrito,_=df_con_distrito_y_gdf_con_estaciones(df_copia_grafico,gdf_copia_grafico)
@@ -222,13 +246,109 @@ def mostrar_grafico(df,gdf,percent):
     fig.update_xaxes(tickangle=45, tickmode='array')
     
     return fig
+
+def mostrar_densidad_tamaño_estación(df_distrito,distrito):
+    df_distrito=df_distrito.rename(columns={'distrito': 'Distrito'})
+    return (ggplot(df_distrito.loc[df_distrito['Distrito'].isin(distrito)], aes(x='total_bases', fill='Distrito')) + 
+      geom_density(alpha=0.5)+
+      scale_x_continuous(breaks=range(0, 41, 5), minor_breaks=[])+
+      scale_y_continuous(minor_breaks=[])+
+      theme_bw()+
+      theme(legend_title=element_text(weight='bold'),
+            axis_text=element_text(weight='bold'),
+           plot_title = element_text(color = "black", face="bold"),
+           axis_title = element_text(size = 14, color = "black", face="bold"),
+           panel_background = element_blank(),
+           axis_line = element_line(color = "black", size=1),
+           axis_ticks = element_line(color = "black", size=1))+
+      labs(x='Numero de bicis por estación', y='Densidad', title='Densidad tipo de estaciones', color='Distritos')
+    )
+
+
+def nivel_ocupacion(df_distrito,distrito, formato='dodge'):
+    if formato=='fill':
+        return (ggplot(df_distrito.loc[df_distrito['distrito'].isin(distrito)], aes(x='distrito', fill='factor(light)')) + 
+        geom_bar(position=formato) + 
+        scale_fill_manual(values=["#1f78b4", "#33a02c", "#e31a1c", "#ff7f00"],name = "Nivel de ocupación",labels = ['Bajo','Medio','Alto','No disponible'])+
+        theme(axis_text_x = element_text(angle = 45, hjust = 1,color = "black"),
+              panel_grid_major_x=element_blank(),
+              panel_background=element_rect(fill='#d4d4d4'),
+              panel_grid_major_y=element_line(size=0.5))+
+        labs(x='Estaciones', y='Distritos')
+        )
+    else:
+        return (ggplot(df_distrito.loc[df_distrito['distrito'].isin(distrito)], aes(x='distrito', fill='factor(light)')) + 
+        geom_bar(position=formato) + 
+        scale_fill_manual(values=["#1f78b4", "#33a02c", "#e31a1c", "#ff7f00"],name = "Nivel de ocupación",labels = ['Bajo','Medio','Alto','No disponible'])+
+        theme(axis_text_x = element_text(angle = 45, hjust = 1,color = "black"),
+              panel_grid_major_x=element_blank(),
+              panel_grid_minor_y=element_blank(),
+              panel_background=element_rect(fill='#d4d4d4'),
+              panel_grid_major_y=element_line(size=0.5))+
+        scale_y_continuous(breaks=range(0, 41, 5),
+                           minor_breaks=range(0, 41, 5))+
+        labs(x='Estaciones', y='Distritos')+
+        expand_limits(y=(0, 41))
+        )
+
+def mostrar_personas_bici(df_con_scrapper):
+    df_con_scrapper['personas por bici']=df_con_scrapper['poblacion']/df_con_scrapper['bicis']
+    fig = px.bar(df_con_scrapper, y='personas por bici', x='nombre', 
+             labels={'nombre': 'Distrito', 'personas por bici': 'Personas por Bici'},
+             color_discrete_sequence=['#4682B4'])
+
+    fig.update_xaxes(tickangle=20, tickmode='array')
+    fig.update_xaxes(title_standoff=20)
+    # Poner el nombre del eje x en negrita
+    fig.update_xaxes(title_text='Distritos', title_font=dict(size=20, family='Arial', color='black'))
+    
+    # Poner el nombre del eje y en negrita
+    fig.update_yaxes(title_text='Personas por Bici', title_font=dict(size=20, family='Arial', color='black'))
+    return fig
+
+
+def mostrar_hectareas_bici(df_con_scrapper):
+    df_con_scrapper['hectareas por bici']=(df_con_scrapper['area']*100)/df_con_scrapper['bicis']
+    
+    fig = px.bar(df_con_scrapper, y='hectareas por bici', x='nombre', 
+                 labels={'nombre': 'Distrito', 'hectareas por bici': 'Hectareas por Bici'},
+                 color_discrete_sequence=['#4682B4'])
+    
+    fig.update_xaxes(tickangle=20, tickmode='array')
+    fig.update_xaxes(title_standoff=20)
+    # Poner el nombre del eje x en negrita
+    fig.update_xaxes(title_text='Distritos', title_font=dict(size=20, family='Arial', color='black'))
+    
+    # Poner el nombre del eje y en negrita
+    fig.update_yaxes(title_text='Hectareas por Bici', title_font=dict(size=20, family='Arial', color='black'))  
+    return fig
+
+def mostrar_hectareas(df_con_scrapper):
+    df_con_scrapper['hectareas']=df_con_scrapper['area']*100
+
+    fig = px.bar(df_con_scrapper, y='hectareas', x='nombre', 
+                 labels={'nombre': 'Distrito', 'hectareas': 'Hectareas'},
+                 color_discrete_sequence=['#4682B4'])
+    
+    fig.update_xaxes(tickangle=20, tickmode='array')
+    fig.update_xaxes(title_standoff=20)
+    # Poner el nombre del eje x en negrita
+    fig.update_xaxes(title_text='Distritos', title_font=dict(size=20, family='Arial', color='black'))
+    
+    # Poner el nombre del eje y en negrita
+    fig.update_yaxes(title_text='Hectáreas', title_font=dict(size=20, family='Arial', color='black'))
+    return fig
+
+
+
 ###Funciones principales########################################################################################################################################
 
 
 def cargar_datos():
-    df=cargar_ficheros('response.json')
-    gdf=cargar_ficheros('Distritos.zip')
-    return df,gdf
+    df=cargar_ficheros('Data\\response.json')
+    gdf=cargar_ficheros('Data\\Distritos.zip')
+    df_scrapeado=cargar_ficheros('Data\\distritos.csv')
+    return df,gdf,df_scrapeado
 
 def botones_para_modificar_df(df, distritos=False):
     if distritos=='Solo distritos':
@@ -314,19 +434,80 @@ def analisis_option(df,gdf):
            _,df_estaciones_por_distrito,gdf_con_estaciones=df_con_distrito_y_gdf_con_estaciones(df_copia,gdf_copia)
            mostrar_mapa_cloropleth(df_estaciones_por_distrito,gdf_con_estaciones)
     
+def bicis_por_distrito(df,gdf_copia1):
+    col1, col2 = st.columns([1, 3])
+    with col1:
+      df=botones_para_modificar_df(df)
+      opcion_grafico = st.radio(
+           "Elige como ver el grafico",
+      ('bicis totales', 'ratio'))
+      
+    with col2:   
+        st.plotly_chart(mostrar_grafico_cant_bicis(df,gdf_copia1,opcion_grafico))
+        
+def densidad_tipos_estaciones(df,gdf,opciones):
+    col1, col2 = st.columns([1, 3])
+    with col1:
+      seleccion=st.multiselect('Selecione distritos:', opciones)
+      
+    with col2:
+        if seleccion==[]:
+            st.header('Secciona al menos algún distrito')
+        else:
+            df_distrito=estaciones_con_distrito(df,gdf)
+            plot=mostrar_densidad_tamaño_estación(df_distrito,seleccion)
+            st.pyplot(ggplot.draw(plot))
+            
+def nivel_de_ocupacion_de_las_estaciones(df,gdf,opciones):
+    col1, col2 = st.columns([1, 3])
+    df_distrito=estaciones_con_distrito(df,gdf)
+    df_distrito_1=df_distrito.copy(deep=True)
+    with col1:
+      seleccion1=st.multiselect('Selecione distritos:', opciones)
+      tipo_de_grafico=st.radio(
+           "Elige como ver el grafico",
+      ('dodge','stack','fill'))
+    with col2:  
+        if len(seleccion1)<2:
+            st.header('Secciona al menos dos distritos')
+        else: 
+            plot=nivel_ocupacion(df_distrito,seleccion1, formato=tipo_de_grafico)
+            st.pyplot(ggplot.draw(plot))
+    mapeo_opciones = {0:'Ocupacion baja', 1:'Ocupacion media', 2:'Ocupacion alta'}
+    opcion_conclusion = st.radio(
+         "Elige que insight ver",
+    (0, 1,2),
+    format_func=lambda opcion: mapeo_opciones[opcion])
+    st.write(f"El distrito con mayor porcentaje es {distrito_nivel_ocupacion(df_distrito_1,'max',opcion_conclusion).iloc[0, 0]} con un {str(round(distrito_nivel_ocupacion(df_distrito_1,'max',opcion_conclusion).iloc[0, 1],4)*100)[:5]}%")
+    st.write(f"El distrito con menor porcentaje es {distrito_nivel_ocupacion(df_distrito_1,'min',opcion_conclusion).iloc[0, 0]} con un {str(round(distrito_nivel_ocupacion(df_distrito_1,'min',opcion_conclusion).iloc[0, 1],4)*100)[:5]}%")        
+
+
+def bicis_por_hectarea(df_con_scrapper):
+    col1, col2 = st.columns([1, 3])
+    with col1:
+      opcion_grafico = st.radio(
+           "Elige como ver el grafico",
+      ('Por hectareas', 'Hectareas por bici'))
+      
+    with col2:   
+        if opcion_grafico=='Hectareas por bici':
+            st.plotly_chart(mostrar_hectareas_bici(df_con_scrapper))
+        else:
+            st.plotly_chart(mostrar_hectareas(df_con_scrapper))
 
 def menu():
     #Indicamos seleccion
-    opcion_principal=st.sidebar.radio('¿Qué ver?',('Mapas', 'Grafico'))
+    opcion_principal=st.sidebar.radio('¿Qué ver?',('Mapas', 'Graficos'))
     #Cargamos los datos  
-    df,gdf=cargar_datos()
+    df,gdf,df_scrapeado=cargar_datos()
     
     #Botones para filtrar
     #df=botones_para_modificar_df(df)
     df_copia1 = df.copy(deep=True)
     gdf_copia1 = gdf.copy(deep=True)
+    df_con_scrapper=estaciones_con_info_extra(df_copia1,gdf_copia1,df_scrapeado)
     if opcion_principal=='Mapas':
-        menu=st.sidebar.selectbox("Elige mapa un tipo de mapa",
+        menu=st.sidebar.selectbox("Elige un tipo de mapa",
              ("Estaciones", "Distritos","Analisis"))
         if menu=="Estaciones":
            estaciones_option(df) 
@@ -335,19 +516,24 @@ def menu():
         if menu=="Analisis":
            analisis_option(df,gdf)
     else:
-        col1, col2 = st.columns([1, 3])
-        with col1:
-          df=botones_para_modificar_df(df)
-          opcion_grafico = st.radio(
-               "Elige como ver el grafico",
-          ('bicis totales', 'ratio'))
-          
-        with col2:   
-            st.plotly_chart(mostrar_grafico(df,gdf_copia1,opcion_grafico))
-
-
-
-
+        menu=st.sidebar.selectbox("Elige un tipo de grafico",
+             ('Bicis por distrito',"Densidad tipos de estaciones", "Bicis por persona","Bicis por hectárea",'Nivel de ocupacion de las estaciones'))
+        opciones=['Villa de Vallecas', 'Arganzuela', 'Chamartín', 'Usera',
+                  'Fuencarral - El Pardo', 'Carabanchel', 'Hortaleza', 'Latina',
+                  'San Blas - Canillejas', 'Ciudad Lineal', 'Moncloa - Aravaca',
+                  'Centro', 'Retiro', 'Salamanca', 'Tetuán', 'Villaverde',
+                  'Puente de Vallecas', 'Vicálvaro', 'Barajas', 'Chamberí',
+                  'Moratalaz']
+        if menu=='Bicis por distrito':
+            bicis_por_distrito(df,gdf_copia1)
+        if menu=='Densidad tipos de estaciones':
+            densidad_tipos_estaciones(df,gdf,opciones)            
+        if menu=='Bicis por persona':
+            st.plotly_chart(mostrar_personas_bici(df_con_scrapper))
+        if menu=='Bicis por hectárea':
+            bicis_por_hectarea(df_con_scrapper)
+        if menu=='Nivel de ocupacion de las estaciones':
+            nivel_de_ocupacion_de_las_estaciones(df,gdf,opciones)
 
 
 
