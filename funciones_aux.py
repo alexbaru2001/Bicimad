@@ -270,7 +270,7 @@ def nivel_ocupacion(df_distrito,distrito, formato='dodge'):
     if formato=='fill':
         return (ggplot(df_distrito_todos_viables.loc[df_distrito_todos_viables['distrito'].isin(distrito)], aes(x='distrito', fill='factor(light)')) + 
         geom_bar(position=formato) + 
-        scale_fill_manual(values=["#1f78b4", "#33a02c", "#e31a1c"],name = "Nivel de ocupación",labels = ['Bajo','Alto','Medio'])+
+        scale_fill_manual(values=["#1f78b4", "#e31a1c", "#33a02c"],name = "Nivel de ocupación",labels = ['Bajo','Alto','Medio'])+
         theme(axis_text_x = element_text(angle = 45, hjust = 1,color = "black"),
               panel_grid_major_x=element_blank(),
               panel_background=element_rect(fill='#d4d4d4'),
@@ -280,7 +280,7 @@ def nivel_ocupacion(df_distrito,distrito, formato='dodge'):
     else:
         return (ggplot(df_distrito_todos_viables.loc[df_distrito_todos_viables['distrito'].isin(distrito)], aes(x='distrito', fill='factor(light)')) + 
         geom_bar(position=formato) + 
-        scale_fill_manual(values=["#1f78b4", "#33a02c", "#e31a1c"],name = "Nivel de ocupación",labels = ['Bajo','Alto','Medio'])+
+        scale_fill_manual(values=["#1f78b4", "#e31a1c", "#33a02c"],name = "Nivel de ocupación",labels = ['Bajo','Alto','Medio'])+
         theme(axis_text_x = element_text(angle = 45, hjust = 1,color = "black"),
               panel_grid_major_x=element_blank(),
               panel_grid_minor_y=element_blank(),
