@@ -269,7 +269,7 @@ def nivel_ocupacion(df_distrito,distrito, formato='dodge'):
     if formato=='fill':
         return (ggplot(df_distrito.loc[df_distrito['distrito'].isin(distrito)], aes(x='distrito', fill='factor(light)')) + 
         geom_bar(position=formato) + 
-        scale_fill_manual(values=["#1f78b4", "#33a02c", "#e31a1c", "#ff7f00"],name = "Nivel de ocupación",labels = ['Bajo','Medio','Alto','No disponible'])+
+        scale_fill_manual(values=["#1f78b4", "#33a02c", "#e31a1c", "#ff7f00"],name = "Nivel de ocupación",labels = ['Bajo','Alto','Medio','No disponible'])+
         theme(axis_text_x = element_text(angle = 45, hjust = 1,color = "black"),
               panel_grid_major_x=element_blank(),
               panel_background=element_rect(fill='#d4d4d4'),
@@ -279,7 +279,7 @@ def nivel_ocupacion(df_distrito,distrito, formato='dodge'):
     else:
         return (ggplot(df_distrito.loc[df_distrito['distrito'].isin(distrito)], aes(x='distrito', fill='factor(light)')) + 
         geom_bar(position=formato) + 
-        scale_fill_manual(values=["#1f78b4", "#33a02c", "#e31a1c", "#ff7f00"],name = "Nivel de ocupación",labels = ['Bajo','Medio','Alto','No disponible'])+
+        scale_fill_manual(values=["#1f78b4", "#33a02c", "#e31a1c", "#ff7f00"],name = "Nivel de ocupación",labels = ['Bajo','Alto','Medio','No disponible'])+
         theme(axis_text_x = element_text(angle = 45, hjust = 1,color = "black"),
               panel_grid_major_x=element_blank(),
               panel_grid_minor_y=element_blank(),
@@ -473,10 +473,10 @@ def nivel_de_ocupacion_de_las_estaciones(df,gdf,opciones):
         else: 
             plot=nivel_ocupacion(df_distrito,seleccion1, formato=tipo_de_grafico)
             st.pyplot(ggplot.draw(plot))
-    mapeo_opciones = {0:'Ocupacion baja', 1:'Ocupacion media', 2:'Ocupacion alta'}
+    mapeo_opciones = {0:'Ocupacion baja', 2:'Ocupacion media', 1:'Ocupacion alta'}
     opcion_conclusion = st.radio(
          "Elige que insight ver",
-    (0, 1,2),
+    (0,2,1),
     format_func=lambda opcion: mapeo_opciones[opcion])
     st.write(f"El distrito con mayor porcentaje es {distrito_nivel_ocupacion(df_distrito_1,'max',opcion_conclusion).iloc[0, 0]} con un {str(round(distrito_nivel_ocupacion(df_distrito_1,'max',opcion_conclusion).iloc[0, 1],4)*100)[:5]}%")
     st.write(f"El distrito con menor porcentaje es {distrito_nivel_ocupacion(df_distrito_1,'min',opcion_conclusion).iloc[0, 0]} con un {str(round(distrito_nivel_ocupacion(df_distrito_1,'min',opcion_conclusion).iloc[0, 1],4)*100)[:5]}%")        
