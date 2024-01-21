@@ -468,8 +468,8 @@ def nivel_de_ocupacion_de_las_estaciones(df,gdf,opciones):
            "Elige como ver el grafico",
       ('dodge','stack','fill'))
     with col2:  
-        if len(seleccion1)<2:
-            st.header('Secciona al menos dos distritos')
+        if len(seleccion1)<3:
+            st.header('Secciona al menos tres distritos')
         else: 
             plot=nivel_ocupacion(df_distrito,seleccion1, formato=tipo_de_grafico)
             st.pyplot(ggplot.draw(plot))
