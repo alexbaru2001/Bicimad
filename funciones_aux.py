@@ -515,6 +515,20 @@ def menu():
     opcion_principal=st.sidebar.radio('¿Qué ver?',('Mapas', 'Gráficos'))
     #Cargamos los datos  
     df,gdf,df_scrapeado=cargar_datos()
+    '''
+    df se corresponde con las estaciones de Bicimad en Madrid
+    gdf se corresponde con los datos geográficos de los distritos de Madrid
+    df_scrapeado se corresponde con datos sobre los distritos de Madrid
+    '''
+    
+    #Los datos no presentan missings se puede comprobar de la siguiente forma
+    print(df.shape,df.dropna().shape)
+    print(gdf.shape,gdf.dropna().shape)
+    print(distritos_scrapper.shape,distritos_scrapper.dropna().shape)
+    
+    #En este trabajo no se va a considerar que existen outliers debido a que todos los datos se van a considerar válidos.
+    #En algún caso concreto de manera excepcional se ha decidido retirar algún dato que afectaba a las métricas, pero se ha 
+    #realizado en el propio apartado.
     
     #Botones para filtrar
     #df=botones_para_modificar_df(df)
@@ -523,12 +537,12 @@ def menu():
     df_con_scrapper=estaciones_con_info_extra(df_copia1,gdf_copia1,df_scrapeado)
     if opcion_principal=='Mapas':
         menu=st.sidebar.selectbox("Elige un tipo de mapa",
-             ("Estaciones", "Distritos","Analisis"))
+             ("Estaciones", "Distritos","Análisis"))
         if menu=="Estaciones":
            estaciones_option(df) 
         if menu=="Distritos":
            distrito_option(gdf,df)
-        if menu=="Analisis":
+        if menu=="Análisis":
            analisis_option(df,gdf)
     else:
         menu=st.sidebar.selectbox("Elige un tipo de grafico",
