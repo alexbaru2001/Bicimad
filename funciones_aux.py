@@ -490,7 +490,7 @@ def bicis_por_persona(df_con_scrapper):
       ('Población', 'Personas por bici'))
       
     with col2:   
-        if opcion_grafico=='Hectáreas por bici':
+        if opcion_grafico=='Personas por bici':
             st.header(' Nª de personas por bici en cada distrito ')
             st.plotly_chart(mostrar_personas_bici(df_con_scrapper))
         else:
