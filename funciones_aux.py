@@ -310,6 +310,21 @@ def mostrar_personas_bici(df_con_scrapper):
     return fig
 
 
+def mostrar_personas(df_con_scrapper):
+    fig = px.bar(df_con_scrapper, y='poblacion', x='nombre', 
+             labels={'nombre': 'Distrito', 'población': 'Poblacion'},
+             color_discrete_sequence=['#4682B4'])
+
+    fig.update_xaxes(tickangle=20, tickmode='array')
+    fig.update_xaxes(title_standoff=20)
+    # Poner el nombre del eje x en negrita
+    fig.update_xaxes(title_text='Distritos', title_font=dict(size=20, family='Arial', color='black'))
+    
+    # Poner el nombre del eje y en negrita
+    fig.update_yaxes(title_text='Población', title_font=dict(size=20, family='Arial', color='black'))
+    return fig
+
+
 def mostrar_hectareas_bici(df_con_scrapper):
     df_con_scrapper['hectareas por bici']=(df_con_scrapper['area']*100)/df_con_scrapper['bicis']
     
@@ -467,6 +482,21 @@ def densidad_tipos_estaciones(df,gdf,opciones):
             plot=mostrar_densidad_tamaño_estación(df_distrito,seleccion)
             st.pyplot(ggplot.draw(plot))
 
+def bicis_por_persona(df_con_scrapper):
+    col1, col2 = st.columns([1, 3])
+    with col1:
+      opcion_grafico = st.radio(
+           "Elige como ver el grafico",
+      ('Población', 'Personas por bici'))
+      
+    with col2:   
+        if opcion_grafico=='Hectáreas por bici':
+            st.header(' Nª de personas por bici en cada distrito ')
+            st.plotly_chart(mostrar_personas_bici(df_con_scrapper))
+        else:
+            st.header(' Población en cada distrito ')
+            st.plotly_chart(mostrar_personas(df_con_scrapper))
+
 def bicis_por_hectarea(df_con_scrapper):
     col1, col2 = st.columns([1, 3])
     with col1:
@@ -499,7 +529,7 @@ def nivel_de_ocupacion_de_las_estaciones(df,gdf,opciones):
             st.header('Nivel de ocupación')
             plot=nivel_ocupacion(df_distrito,seleccion1, formato=tipo_de_grafico)
             st.pyplot(ggplot.draw(plot))
-    mapeo_opciones = {0:'Ocupacion baja', 2:'Ocupacion media', 1:'Ocupacion alta'}
+    mapeo_opciones = {0:'Ocupación baja', 2:'Ocupación media', 1:'Ocupación alta'}
     opcion_conclusion = st.radio(
          "**Elige que insight ver**",
     (0,2,1),
@@ -558,8 +588,7 @@ def menu():
         if menu=='Densidad tipos de estaciones':
             densidad_tipos_estaciones(df,gdf,opciones)            
         if menu=='Número de personas por bici':
-            st.header('Nª de personas por bici en cada distrito')
-            st.plotly_chart(mostrar_personas_bici(df_con_scrapper))
+            bicis_por_persona(df_con_scrapper)
         if menu=='Número de hectáreas por bici':
             bicis_por_hectarea(df_con_scrapper)
         if menu=='Nivel de ocupación de las estaciones':
