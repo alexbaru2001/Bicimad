@@ -194,7 +194,7 @@ def mostrar_mapa_cloropleth(df_estaciones_por_distrito,gdf_con_estaciones):
         fill_color='YlGn',
         fill_opacity=0.7,
         line_opacity=0.2,
-        legend_name='Numero de estaciones de bici'
+        legend_name='Número de estaciones de bici'
     ).add_to(map)
     
     def style_function(feature):
@@ -222,7 +222,8 @@ def mostrar_mapa_densidad(df):
                             radius = 10,
                             center = dict(lat = df['latitud'].mean(), lon = df['longitud'].mean()),
                             zoom = 10,
-                            mapbox_style = 'open-street-map')    
+                            mapbox_style = 'open-street-map',
+                            labels={'total_bases': 'Número de bicis'})    
     return fig
 
 
@@ -233,7 +234,7 @@ def mostrar_grafico_cant_bicis(df,gdf,percent):
     total_bicis=df_con_distrito.groupby('distrito')['total_bases'].sum().reset_index()
     total_bicis_estacion=total_bicis.merge(df_estaciones_por_distrito,on='distrito',how='left')
     columna=None
-    if percent=='ratio':
+    if percent=='Ratio':
         total_bicis_estacion=total_bicis_estacion.assign(changes=total_bicis_estacion['total_bases']/total_bicis_estacion['count'])
         columna='changes'
     else:
@@ -250,7 +251,7 @@ def mostrar_grafico_cant_bicis(df,gdf,percent):
 def mostrar_densidad_tamaño_estación(df_distrito,distrito):
     df_distrito=df_distrito.rename(columns={'distrito': 'Distrito'})
     return (ggplot(df_distrito.loc[df_distrito['Distrito'].isin(distrito)], aes(x='total_bases', fill='Distrito')) + 
-      geom_density(alpha=0.5)+
+      geom_density(alpha=0.8)+
       scale_x_continuous(breaks=range(0, 41, 5), minor_breaks=[])+
       scale_y_continuous(minor_breaks=[])+
       theme_bw()+
@@ -261,7 +262,8 @@ def mostrar_densidad_tamaño_estación(df_distrito,distrito):
            panel_background = element_blank(),
            axis_line = element_line(color = "black", size=1),
            axis_ticks = element_line(color = "black", size=1))+
-      labs(x='Número de bicis por estación', y='Densidad', title='Densidad tipo de estaciones', color='Distritos')
+      labs(x='Número de bicis por estación', y='Densidad', title='Densidad tipo de estaciones', color='Distritos')+
+      scale_fill_brewer(type ='diverging',palette='RdYlBu')
     )
 
 
@@ -356,7 +358,7 @@ def botones_para_modificar_df(df, distritos=False):
         return df
     else:
         opciones=['Activas','Inactivas']
-        seleccion=st.multiselect('Estado de la estacion:', opciones)
+        seleccion=st.multiselect('Estado de la estación:', opciones)
         if len(seleccion)==1:
             if 'Activas' in seleccion:
                 seleccion_1=0
@@ -418,18 +420,18 @@ def analisis_option(df,gdf):
     with col1:
       st.header("Opciones")
       sidebar_distritos_estacion= st.selectbox('Tipo de mapa de las estaciones:',
-           ("Mapa con escala de color", "Mapa de densidad"))
+           ("Concentración de estaciones por distrito", "Densidad de bicis"))
       df=botones_para_modificar_df(df)
       
     with col2:
-        if sidebar_distritos_estacion=='Mapa de densidad':
-            st.header("Mapa de densidad")
+        if sidebar_distritos_estacion=='Densidad de bicis':
+            st.header("Densidad de bicis")
             df_copia_profunda = df.copy(deep=True)
             df_adecuado=modificar_col_geometry(df_copia_profunda)
             st.plotly_chart(mostrar_mapa_densidad(df_adecuado))
         
-        if sidebar_distritos_estacion=='Mapa con escala de color':
-           st.header("Mapa con escala de color")
+        if sidebar_distritos_estacion=='Concentración de estaciones por distrito':
+           st.header("Concentración de estaciones por distrito")
            df_copia = df.copy(deep=True)
            gdf_copia = gdf.copy(deep=True)
            _,df_estaciones_por_distrito,gdf_con_estaciones=df_con_distrito_y_gdf_con_estaciones(df_copia,gdf_copia)
@@ -441,9 +443,13 @@ def bicis_por_distrito(df,gdf_copia1):
       df=botones_para_modificar_df(df)
       opcion_grafico = st.radio(
            "Elige como ver el grafico",
-      ('bicis totales', 'ratio'))
+      ('Bicis totales', 'Ratio'))
       
-    with col2:   
+    with col2:
+        if opcion_grafico=='Ratio':
+            st.header("Ratio de bicis/estación por distrito")
+        else:
+            st.header("Número de bicis por distrito")
         st.plotly_chart(mostrar_grafico_cant_bicis(df,gdf_copia1,opcion_grafico))
         
 def densidad_tipos_estaciones(df,gdf,opciones):
@@ -453,11 +459,29 @@ def densidad_tipos_estaciones(df,gdf,opciones):
       
     with col2:
         if seleccion==[]:
-            st.header('Secciona al menos algún distrito')
+            st.header('Selecciona al menos algún distrito')
+        elif len(seleccion)>11:
+            st.header('Selecciona menos distritos')
         else:
             df_distrito=estaciones_con_distrito(df,gdf)
             plot=mostrar_densidad_tamaño_estación(df_distrito,seleccion)
             st.pyplot(ggplot.draw(plot))
+
+def bicis_por_hectarea(df_con_scrapper):
+    col1, col2 = st.columns([1, 3])
+    with col1:
+      opcion_grafico = st.radio(
+           "Elige como ver el grafico",
+      ('Por hectáreas', 'Hectáreas por bici'))
+      
+    with col2:   
+        if opcion_grafico=='Hectáreas por bici':
+            st.header(' Nª de hectáreas por bici en cada distrito ')
+            st.plotly_chart(mostrar_hectareas_bici(df_con_scrapper))
+        else:
+            st.header(' Nª de hectáreas en cada distrito ')
+            st.plotly_chart(mostrar_hectareas(df_con_scrapper))
+
             
 def nivel_de_ocupacion_de_las_estaciones(df,gdf,opciones):
     col1, col2 = st.columns([1, 3])
@@ -470,35 +494,25 @@ def nivel_de_ocupacion_de_las_estaciones(df,gdf,opciones):
       ('dodge','stack','fill'))
     with col2:  
         if len(seleccion1)<2:
-            st.header('Secciona al menos cuatro distritos')
+            st.header('Secciona al menos dos distritos')
         else: 
+            st.header('Nivel de ocupación')
             plot=nivel_ocupacion(df_distrito,seleccion1, formato=tipo_de_grafico)
             st.pyplot(ggplot.draw(plot))
     mapeo_opciones = {0:'Ocupacion baja', 2:'Ocupacion media', 1:'Ocupacion alta'}
     opcion_conclusion = st.radio(
-         "Elige que insight ver",
+         "**Elige que insight ver**",
     (0,2,1),
     format_func=lambda opcion: mapeo_opciones[opcion])
     st.write(f"El distrito con mayor porcentaje es {distrito_nivel_ocupacion(df_distrito_1,'max',opcion_conclusion).iloc[0, 0]} con un {str(round(distrito_nivel_ocupacion(df_distrito_1,'max',opcion_conclusion).iloc[0, 1],4)*100)[:5]}%")
     st.write(f"El distrito con menor porcentaje es {distrito_nivel_ocupacion(df_distrito_1,'min',opcion_conclusion).iloc[0, 0]} con un {str(round(distrito_nivel_ocupacion(df_distrito_1,'min',opcion_conclusion).iloc[0, 1],4)*100)[:5]}%")        
 
 
-def bicis_por_hectarea(df_con_scrapper):
-    col1, col2 = st.columns([1, 3])
-    with col1:
-      opcion_grafico = st.radio(
-           "Elige como ver el grafico",
-      ('Por hectareas', 'Hectareas por bici'))
-      
-    with col2:   
-        if opcion_grafico=='Hectareas por bici':
-            st.plotly_chart(mostrar_hectareas_bici(df_con_scrapper))
-        else:
-            st.plotly_chart(mostrar_hectareas(df_con_scrapper))
+
 
 def menu():
     #Indicamos seleccion
-    opcion_principal=st.sidebar.radio('¿Qué ver?',('Mapas', 'Graficos'))
+    opcion_principal=st.sidebar.radio('¿Qué ver?',('Mapas', 'Gráficos'))
     #Cargamos los datos  
     df,gdf,df_scrapeado=cargar_datos()
     
@@ -530,6 +544,7 @@ def menu():
         if menu=='Densidad tipos de estaciones':
             densidad_tipos_estaciones(df,gdf,opciones)            
         if menu=='Número de personas por bici':
+            st.header('Nª de personas por bici en cada distrito')
             st.plotly_chart(mostrar_personas_bici(df_con_scrapper))
         if menu=='Número de hectáreas por bici':
             bicis_por_hectarea(df_con_scrapper)
