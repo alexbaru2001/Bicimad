@@ -522,9 +522,9 @@ def menu():
     '''
     
     #Los datos no presentan missings se puede comprobar de la siguiente forma
-    print(df.shape,df.dropna().shape)
-    print(gdf.shape,gdf.dropna().shape)
-    print(distritos_scrapper.shape,distritos_scrapper.dropna().shape)
+    #print(df.shape,df.dropna().shape)
+    #print(gdf.shape,gdf.dropna().shape)
+    #print(distritos_scrapper.shape,distritos_scrapper.dropna().shape)
     
     #En este trabajo no se va a considerar que existen outliers debido a que todos los datos se van a considerar válidos.
     #En algún caso concreto de manera excepcional se ha decidido retirar algún dato que afectaba a las métricas, pero se ha 
